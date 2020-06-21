@@ -15,3 +15,7 @@ Track multiple objects using just x, y coordinates
 ```bash
 $ pip install git+https://github.com/bherbruck/simple_tracker
 ```
+or
+```bash
+$ pip install simple-tracker
+```
