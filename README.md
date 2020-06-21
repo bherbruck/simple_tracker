@@ -19,3 +19,13 @@ or
 ```bash
 $ pip install simple-tracker
 ```
+## Usage
+All you need to do is pass a list of tuples (x, y) to the Tracker.update() method
+```python
+from simple_tracker import Tracker
+
+tracker = Tracker()
+while True:
+    centroids = some_detection_algorithm()
+    tracker.update(centroids)
+```
