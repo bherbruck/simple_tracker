@@ -1,7 +1,7 @@
 class Tracker():
     # TODO add frame sizing for:
-        #   - dynamic processing of min_distance
-        #   - process objects moving in/out of frame
+    #   - dynamic processing of min_distance
+    #   - process objects moving in/out of frame
 
     def __init__(self, max_distance=5, timeout=40):
         self.points = {}
@@ -11,6 +11,14 @@ class Tracker():
         self.frame = 0
 
     def get(self, key):
+        """[summary]
+
+        Args:
+            key (int): key of the tem to get
+
+        Returns:
+            dict: dict representation of the item
+        """
         try:
             point = self.points[key]
             return {'x': point[0], 'y': point[1], 'distance': point[2],
@@ -34,20 +42,20 @@ class Tracker():
 
         Args:
             points (list[tuple]): list of x, y coords
-                example: [(x, y), (x, y)...]
-            tracking_lost_cb (function): callback to call when an item loses
-                tracking
+            tracking_found_cb ([type], optional): function to call when a new item is found
+            tracking_lost_cb ([type], optional): function to call when an item loses tracking
+
         Returns:
-            (list): list of deregistered items, no id
+            list: list of points that lost tracking (to be counted)
         """
         counts = []
         if len(points) > 0:
             movements = {}
-            
+
             for x2, y2 in points:
                 counted = False
                 distances = {}
-                
+
                 # get all the distances
                 for k, v in self.points.items():
                     # deregister and count
@@ -58,18 +66,18 @@ class Tracker():
                                 counts.append(v)
                         self.deregister(k)
                         continue
-                    
+
                     distance = Tracker.distance(v[0], v[1], x2, y2)
                     if distance <= self.max_distance:
                         distances[k] = (x2, y2, distance)
-                        
+
                 # filter the distances
                 if len(distances) > 0:
                     k, v = min(distances.items(), key=lambda x: x[1][2])
                     movements[k] = (v[0], v[1], self.points[k][2] + v[2],
                                     self.frame)
                     counted = True
-                
+
                 if not counted:
                     # tracking found callback
                     if tracking_found_cb is not None:
@@ -78,7 +86,7 @@ class Tracker():
                     else:
                         # add new item
                         self.register(x2, y2)
-            
+
             # update points
             self.points.update(movements)
 
@@ -90,6 +98,6 @@ class Tracker():
 
     def __len__(self):
         return len(self.points)
-    
+
     def __dict__(self):
         return {k: self.get(k) for k, v in self.points.items()}
