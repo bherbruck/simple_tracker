@@ -1,3 +1,5 @@
 from simple_tracker import Tracker
 
-# TODO
+
+def test_Tracker():
+    tracker = Tracker()
