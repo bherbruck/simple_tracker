@@ -1,9 +1,16 @@
-class Tracker():
-    # TODO add frame sizing for:
-    #   - dynamic processing of min_distance
-    #   - process objects moving in/out of frame
-
+class Tracker:
     def __init__(self, max_distance=5, timeout=40):
+        '''
+        A simple object tracker
+
+        Args:
+            max_distance (int, optional):
+                maximum distance an item can move between updates, generally in pixels,
+                defaults to 5.
+            timeout (int, optional):
+                number of update ticks (frames) to wait for an item to be deleted,
+                defaults to 40.
+        '''
         self.points = {}
         self.max_distance = max_distance
         self.timeout = timeout
@@ -11,17 +18,20 @@ class Tracker():
         self.frame = 0
 
     def get(self, key):
-        """Get a dict representation of a tracked point
+        """
+        Get a dict representation of a tracked point
 
         Args:
-            key (int): key of the tem to get
+            key (int):
+                key of the tem to get
 
         Returns:
-            dict: dict representation of the item
+            dict:
+                dict representation of the item
         """
         try:
             point = self.points[key]
-            return {'x': point[0], 'y': point[1], 'distance': point[2],
+            return {'id': key, 'x': point[0], 'y': point[1], 'distance': point[2],
                     'last_frame': point[3]}
         except KeyError:
             return None
@@ -37,61 +47,84 @@ class Tracker():
     def deregister(self, k):
         del self.points[k]
 
+    def get_timeouts(self, points, tracking_lost_cb):
+        timeouts = []
+        for k, v in self.points.items():
+            # deregister and count
+            if self.frame >= v[3] + self.timeout:
+                # tracking lost callback
+                if tracking_lost_cb is not None:
+                    if tracking_lost_cb(self.get(k)):
+                        timeouts.append(self.get(k))
+                else:
+                    timeouts.append(self.get(k))
+        return timeouts
+
     def update(self, points, tracking_found_cb=None, tracking_lost_cb=None):
-        """Update objects and determine if they need to be tracked
+        """
+        Update object tracking, tracking can be fine-tuned using callbacks
 
         Args:
-            points (list[tuple]): list of x, y coords
-            tracking_found_cb ([type], optional): function to call when a new item is found
-            tracking_lost_cb ([type], optional): function to call when an item loses tracking
+            points (list[tuple]):
+                list of x, y coords
+            tracking_found_cb ([type], optional):
+                function to call when a new item is found,
+                passes a tuple of the point found '(x, y))',
+                return True from the callback function to start tracking the point,
+                defaults to None
+            tracking_lost_cb ([type], optional):
+                function to call when an item loses tracking,
+                passes a dictionary of the point lost '{'x': x, 'y': y, 'distance': d, ...}',
+                return True from the callback function to stop tracking the point and return,
+                defaults to None
 
         Returns:
-            list: list of points that lost tracking (to be counted)
+            list:
+                list of points that lost tracking (for counting)
         """
-        counts = []
-        if len(points) > 0:
-            movements = {}
+        deletions = self.get_timeouts(points, tracking_lost_cb)
+        movements = {}
+        additions = []
 
-            for x2, y2 in points:
-                counted = False
-                distances = {}
+        for x2, y2 in points:
+            processed = False
+            distances = {}
 
-                # get all the distances
-                for k, v in self.points.items():
-                    # deregister and count
-                    if self.frame >= v[3] + self.timeout:
-                        # tracking lost callback
-                        if tracking_lost_cb is not None:
-                            if tracking_lost_cb(self.get(k)):
-                                counts.append(v)
-                        self.deregister(k)
-                        continue
+            # get all the distances
+            for k, v in self.points.items():
+                distance = Tracker.distance(v[0], v[1], x2, y2)
+                if distance <= self.max_distance:
+                    distances[k] = (x2, y2, distance)
 
-                    distance = Tracker.distance(v[0], v[1], x2, y2)
-                    if distance <= self.max_distance:
-                        distances[k] = (x2, y2, distance)
+            # filter the distances
+            if len(distances) > 0:
+                print(distances)
+                k, v = min(distances.items(), key=lambda x: x[1][2])
+                movements[k] = (v[0], v[1], self.points[k][2] + v[2], self.frame)
+                processed = True
 
-                # filter the distances
-                if len(distances) > 0:
-                    k, v = min(distances.items(), key=lambda x: x[1][2])
-                    movements[k] = (v[0], v[1], self.points[k][2] + v[2],
-                                    self.frame)
-                    counted = True
+            if not processed:
+                # tracking found callback
+                if tracking_found_cb is not None:
+                    if tracking_found_cb((x2, y2)):
+                        additions.append((x2, y2))
+                else:
+                    # add new item
+                    additions.append((x2, y2))
 
-                if not counted:
-                    # tracking found callback
-                    if tracking_found_cb is not None:
-                        if tracking_found_cb({'x': x2, 'y': y2}):
-                            self.register(x2, y2)
-                    else:
-                        # add new item
-                        self.register(x2, y2)
-
-            # update points
-            self.points.update(movements)
+        # deregister old points
+        for point in deletions:
+            self.deregister(point['id'])
+            
+        # add new points
+        for point in additions:
+            self.register(point[0], point[1])
+            
+        # update points
+        self.points.update(movements)
 
         self.frame += 1
-        return counts
+        return deletions
 
     def __str__(self):
         return str(self.points)
