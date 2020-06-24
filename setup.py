@@ -6,7 +6,7 @@ with open('README.md', 'r') as fh:
 
 setuptools.setup(
     name='simple_tracker',
-    version='0.1.0',
+    version='0.1.1',
     author='Brennen Herbruck',
     author_email='brennen.hrbruck@gmail.com',
     description='Track multiple objects using just x, y coordinates',
