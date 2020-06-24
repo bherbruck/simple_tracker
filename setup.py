@@ -5,11 +5,11 @@ with open('README.md', 'r') as fh:
     long_description = fh.read()
 
 setuptools.setup(
-    name='simple_tracker',  # Replace with your own username
+    name='simple_tracker',
     version='0.1.0',
     author='Brennen Herbruck',
     author_email='brennen.hrbruck@gmail.com',
-    description='A small example package',
+    description='Track multiple objects using just x, y coordinates',
     long_description=long_description,
     long_description_content_type='text/markdown',
     url='https://github.com/bherbruck/simple_tracker',
