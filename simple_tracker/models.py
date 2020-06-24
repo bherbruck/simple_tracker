@@ -98,7 +98,6 @@ class Tracker:
 
             # filter the distances
             if len(distances) > 0:
-                print(distances)
                 k, v = min(distances.items(), key=lambda x: x[1][2])
                 movements[k] = (v[0], v[1], self.points[k][2] + v[2], self.frame)
                 processed = True
