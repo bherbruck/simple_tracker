@@ -11,7 +11,7 @@ class Tracker():
         self.frame = 0
 
     def get(self, key):
-        """[summary]
+        """Get a dict representation of a tracked point
 
         Args:
             key (int): key of the tem to get
