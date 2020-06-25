@@ -13,6 +13,12 @@ Track multiple objects using just x, y coordinates!
 
 simple_tracker is lightweight, platform independent, and requires no external dependencies other than the Python standard library. It is originally designed to count and track objects on [OpenMV](https://openmv.io/) MicroPython boards and will see future use with opencv-python on Raspberry Pi.
 
+## In action
+
+This was made using an OpenMV cam and the example [here](examples/openmv/simple_tracking.py)
+
+![Video](docs/media/tacking3.gif)
+
 ## Installation
 ```bash
 $ pip install git+https://github.com/bherbruck/simple_tracker
