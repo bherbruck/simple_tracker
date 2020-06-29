@@ -1,7 +1,7 @@
 class Tracker:
     def __init__(self, max_distance=5, timeout=40):
         '''
-        A simple object tracker
+        A simple centroid object tracker
 
         Args:
             max_distance (int, optional):
