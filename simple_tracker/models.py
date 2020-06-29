@@ -31,7 +31,18 @@ class Tracker:
     def stop_tracking(self, k):
         del self.points[k]
 
-    def get_timeouts(self, points, tracking_lost_cb=None):
+    def get_timeouts(self, tracking_lost_cb=None):
+        """Get all the points that have not been seen for longer than the timeout threshold
+
+        Args:
+            tracking_lost_cb (function) function to call when a point is lost
+
+        Returns:
+            list: list of dicts representation of the points
+        
+        TODO:
+            return dict instead of list of dicts
+        """
         timeouts = []
         for k, v in self.points.items():
             # deregister and count
@@ -91,11 +102,6 @@ class Tracker:
             list:
                 list of points that lost tracking (for counting)
         """
-        # stop tracking old points
-        deletions = self.get_timeouts(points, tracking_lost_cb)
-        for point in deletions:
-            self.stop_tracking(point['id'])
-
         movements = {}
         additions = []
 
@@ -104,6 +110,7 @@ class Tracker:
             closest = self.get_closest(x, y)
             if closest is not None:
                 movements.update(closest)
+            # add point if it isn't close to any active points
             else:
                 # tracking found callback
                 if tracking_found_cb is not None:
@@ -118,6 +125,10 @@ class Tracker:
             self.start_tracking(point[0], point[1])
         # update active points
         self.points.update(movements)
+        # stop tracking old points
+        deletions = self.get_timeouts(tracking_lost_cb)
+        for point in deletions:
+            self.stop_tracking(point['id'])
 
         self.frame += 1
         return deletions
