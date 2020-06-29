@@ -10,6 +10,9 @@ class Tracker:
             timeout (int, optional):
                 number of update ticks (frames) to wait for an item to be deleted,
                 defaults to 40.
+
+        TODO:
+            Refactor output of Tracker.points to include amount of frames
         '''
         self.points = {}
         self.max_distance = max_distance
@@ -28,7 +31,7 @@ class Tracker:
     def stop_tracking(self, k):
         del self.points[k]
 
-    def get_timeouts(self, points, tracking_lost_cb):
+    def get_timeouts(self, points, tracking_lost_cb=None):
         timeouts = []
         for k, v in self.points.items():
             # deregister and count
@@ -41,6 +44,31 @@ class Tracker:
                     timeouts.append(self.get(k))
         return timeouts
 
+    def get_closest(self, x, y, tracking_update_cb=None):
+        """Get the closest active point
+
+        Args:
+            x (int): x
+            y (int): y
+            tracking_found_cb (function, optional): not implemented
+
+        Returns:
+            dict: {<id>: (<x>, <y>, <distance>, <frame>)}
+        """
+        distances = {}
+        # get all the distances
+        for k, v in self.points.items():
+            distance = Tracker.distance(v[0], v[1], x, y)
+            if distance <= self.max_distance:
+                distances[k] = (x, y, distance)
+
+        # filter the distances
+        if len(distances) > 0:
+            k, v = min(distances.items(), key=lambda x: x[1][2])
+            return {k: (v[0], v[1], self.points[k][2] + v[2], self.frame)}
+        else:
+            return None
+
     def update(self, points, tracking_found_cb=None, tracking_lost_cb=None):
         """
         Update object tracking, tracking can be fine-tuned using callbacks
@@ -48,12 +76,12 @@ class Tracker:
         Args:
             points (list[tuple]):
                 list of x, y coords
-            tracking_found_cb ([type], optional):
+            tracking_found_cb (function, optional):
                 function to call when a new item is found,
                 passes a tuple of the point found '(x, y))',
                 return True from the callback function to start tracking the point,
                 defaults to None
-            tracking_lost_cb ([type], optional):
+            tracking_lost_cb (function, optional):
                 function to call when an item loses tracking,
                 passes a dictionary of the point lost '{'x': x, 'y': y, 'distance': d, ...}',
                 return True from the callback function to stop tracking the point and return,
@@ -63,45 +91,32 @@ class Tracker:
             list:
                 list of points that lost tracking (for counting)
         """
+        # stop tracking old points
         deletions = self.get_timeouts(points, tracking_lost_cb)
-        movements = {}
-        additions = []
-
-        for x2, y2 in points:
-            processed = False
-            distances = {}
-
-            # get all the distances
-            for k, v in self.points.items():
-                distance = Tracker.distance(v[0], v[1], x2, y2)
-                if distance <= self.max_distance:
-                    distances[k] = (x2, y2, distance)
-
-            # filter the distances
-            if len(distances) > 0:
-                k, v = min(distances.items(), key=lambda x: x[1][2])
-                movements[k] = (v[0], v[1], self.points[k]
-                                [2] + v[2], self.frame)
-                processed = True
-
-            if not processed:
-                # tracking found callback
-                if tracking_found_cb is not None:
-                    if tracking_found_cb((x2, y2)):
-                        additions.append((x2, y2))
-                else:
-                    # add new item
-                    additions.append((x2, y2))
-
-        # deregister old points
         for point in deletions:
             self.stop_tracking(point['id'])
 
-        # add new points
+        movements = {}
+        additions = []
+
+        for x, y in points:
+            # find the closest active point
+            closest = self.get_closest(x, y)
+            if closest is not None:
+                movements.update(closest)
+            else:
+                # tracking found callback
+                if tracking_found_cb is not None:
+                    if tracking_found_cb((x, y)):
+                        additions.append((x, y))
+                else:
+                    # add new item
+                    additions.append((x, y))
+
+        # start tracking new points
         for point in additions:
             self.start_tracking(point[0], point[1])
-
-        # update points
+        # update active points
         self.points.update(movements)
 
         self.frame += 1
