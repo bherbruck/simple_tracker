@@ -40,11 +40,11 @@ class Tracker:
     def distance(x1, y1, x2, y2):
         return abs(((x2-x1)**2+(y2-y1)**2)**(1/2))
 
-    def register(self, x, y):
+    def start_tracking(self, x, y):
         self.points[self.count] = (x, y,  0, self.frame)
         self.count += 1
 
-    def deregister(self, k):
+    def stop_tracking(self, k):
         del self.points[k]
 
     def get_timeouts(self, points, tracking_lost_cb):
@@ -113,11 +113,11 @@ class Tracker:
 
         # deregister old points
         for point in deletions:
-            self.deregister(point['id'])
+            self.stop_tracking(point['id'])
             
         # add new points
         for point in additions:
-            self.register(point[0], point[1])
+            self.start_tracking(point[0], point[1])
             
         # update points
         self.points.update(movements)
