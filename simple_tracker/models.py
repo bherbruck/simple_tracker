@@ -17,25 +17,6 @@ class Tracker:
         self.count = 0
         self.frame = 0
 
-    def get(self, key):
-        """
-        Get a dict representation of a tracked point
-
-        Args:
-            key (int):
-                key of the tem to get
-
-        Returns:
-            dict:
-                dict representation of the item
-        """
-        try:
-            point = self.points[key]
-            return {'id': key, 'x': point[0], 'y': point[1], 'distance': point[2],
-                    'last_frame': point[3]}
-        except KeyError:
-            return None
-
     @staticmethod
     def distance(x1, y1, x2, y2):
         return abs(((x2-x1)**2+(y2-y1)**2)**(1/2))
@@ -99,7 +80,8 @@ class Tracker:
             # filter the distances
             if len(distances) > 0:
                 k, v = min(distances.items(), key=lambda x: x[1][2])
-                movements[k] = (v[0], v[1], self.points[k][2] + v[2], self.frame)
+                movements[k] = (v[0], v[1], self.points[k]
+                                [2] + v[2], self.frame)
                 processed = True
 
             if not processed:
@@ -114,11 +96,11 @@ class Tracker:
         # deregister old points
         for point in deletions:
             self.stop_tracking(point['id'])
-            
+
         # add new points
         for point in additions:
             self.start_tracking(point[0], point[1])
-            
+
         # update points
         self.points.update(movements)
 
@@ -130,6 +112,25 @@ class Tracker:
 
     def __len__(self):
         return len(self.points)
+
+    def get(self, key):
+        """
+        Get a dict representation of a tracked point
+
+        Args:
+            key (int):
+                key of the tem to get
+
+        Returns:
+            dict:
+                dict representation of the item
+        """
+        try:
+            point = self.points[key]
+            return {'id': key, 'x': point[0], 'y': point[1], 'distance': point[2],
+                    'last_frame': point[3]}
+        except KeyError:
+            return None
 
     def __dict__(self):
         return {k: self.get(k) for k, v in self.points.items()}
