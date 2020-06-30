@@ -39,11 +39,12 @@ class Tracker:
 
         Returns:
             list: list of dicts representation of the points
-        
+
         TODO:
             return dict instead of list of dicts
         """
         timeouts = []
+        ignored = []
         for k, v in self.points.items():
             # deregister and count
             if self.frame >= v[3] + self.timeout:
@@ -51,9 +52,11 @@ class Tracker:
                 if tracking_lost_cb is not None:
                     if tracking_lost_cb(self.get(k)):
                         timeouts.append(self.get(k))
+                    else:
+                        ignored.append(self.get(k))
                 else:
                     timeouts.append(self.get(k))
-        return timeouts
+        return timeouts, ignored
 
     def get_closest(self, x, y, tracking_update_cb=None):
         """Get the closest active point
@@ -126,8 +129,8 @@ class Tracker:
         # update active points
         self.points.update(movements)
         # stop tracking old points
-        deletions = self.get_timeouts(tracking_lost_cb)
-        for point in deletions:
+        deletions, ignored = self.get_timeouts(tracking_lost_cb)
+        for point in deletions + ignored:
             self.stop_tracking(point['id'])
 
         self.frame += 1
