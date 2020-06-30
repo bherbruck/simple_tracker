@@ -30,22 +30,9 @@ def test_real_data():
     tracker = Tracker(max_distance=data['tracker']['max_distance'],
                       timeout=data['tracker']['timeout'])
     tracker.frame = data['data'][0]['frame']
-    
-    def tracking_found_cb(point):
-        return (
-            point[1] < 140 or
-            tracker.frame == 0
-        )
-
-    def tracking_lost_cb(point):
-        return (
-            point['y'] >= 140 and
-            point['distance'] >= 30
-        )
 
     for frame in data['data']:
-        tracker.update(frame['test_data'], tracking_found_cb=tracking_found_cb,
-                       tracking_lost_cb=tracking_lost_cb)
+        tracker.update(frame['test_data'])
         
         points = [int(k) for k in frame['assertations'].keys()]
         assert sorted(tracker.points.keys()) == sorted(points)
