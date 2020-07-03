@@ -11,7 +11,7 @@
 
 Track multiple objects using just x, y coordinates!
 
-simple_tracker is a simple cemtrpod object tracker and requires no external dependencies other than the Python standard library. It is originally designed to count and track objects on [OpenMV](https://openmv.io/) MicroPython boards and will see future use with opencv-python on Raspberry Pi.
+simple_tracker is a simple, generic centroid object tracker and requires no external dependencies other than the Python standard library. It is originally designed to count and track objects on [OpenMV](https://openmv.io/) MicroPython boards and will see future use with opencv-python on Raspberry Pi.
 
 ## In action
 
